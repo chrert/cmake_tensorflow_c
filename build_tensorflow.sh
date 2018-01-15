@@ -27,7 +27,7 @@ export PYTHON_LIB_PATH="$(${PYTHON_BIN_PATH} -c 'import site; print(site.getsite
 
 ./configure
 
-CONFIG="-c opt"
+CONFIG="-c opt --copt=${CC_OPT_FLAGS} --copt=-mfpmath=sse"
 if [ "${TF_NEED_MKL}" == "1" ]
 then
   CONFIG="--config=mkl ${CONFIG} --copt=-DEIGEN_USE_VML"
