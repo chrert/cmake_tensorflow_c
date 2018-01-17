@@ -18,22 +18,28 @@ export TF_ENABLE_XLA=${TF_ENABLE_XLA-0}
 export TF_CUDA_CLANG=${TF_CUDA_LANG-0}
 export TF_NEED_CUDA=${TF_NEED_CUDA-0}
 
-export TF_NEED_MKL=1
-export TF_DOWNLOAD_MKL=0
-export TF_MKL_ROOT="$(readlink -e ../mkl_dnn)"
+export TF_NEED_MKL=${TF_NEED_MKL-0}
+export TF_DOWNLOAD_MKL=${TF_DOWNLOAD_MKL-0}
+if [ "${TF_DOWNLOAD_MKL}" == "0" ]
+then
+  export TF_MKL_ROOT="$(readlink -e ../mkl_dnn)"
+fi
 
 export PYTHON_BIN_PATH="$(which python)"
 export PYTHON_LIB_PATH="$(${PYTHON_BIN_PATH} -c 'import site; print(site.getsitepackages()[0])')"
 
 ./configure
 
-CONFIG="-c opt --copt=${CC_OPT_FLAGS} --copt=-mfpmath=sse"
+CONFIG="-c opt --copt=${CC_OPT_FLAGS} "
 if [ "${TF_NEED_MKL}" == "1" ]
 then
-  CONFIG="--config=mkl ${CONFIG} --copt=-DEIGEN_USE_VML"
+  CONFIG="--config=mkl ${CONFIG} --copt=-DEIGEN_USE_VML --copt=-mfpmath=sse"
 fi
 
-ADDITIONAL_BAZEL_OPTS="--incompatible_load_argument_is_label=false"
+if [ "${TF_NEED_CUDA}" == "1" ]
+then
+  CONFIG="--config=cuda ${CONFIG}"
+fi
 
 bazel build ${ADDITIONAL_BAZEL_OPTS} --verbose_failures ${CONFIG} tensorflow:libtensorflow.so
 bazel build ${ADDITIONAL_BAZEL_OPTS} --verbose_failures ${CONFIG} //tensorflow/tools/lib_package:libtensorflow
